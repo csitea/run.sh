@@ -176,7 +176,8 @@ do_set_vars(){
    do_read_cmd_args "$@"
    # test $? -eq "0" && export exit_code='0'
    export exit_code=1 # assume failure for each action, enforce return code usage
-   export host_name="$(hostname -s)"
+   #export host_name="$(hostname -s)"
+   export host_name="$(cat /proc/sys/kernel/hostname)"
    unit_run_dir=$(perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs_path(@ARGV[0]));' -- "$0")
    export RUN_UNIT=$(cd $unit_run_dir/../../.. ; basename `pwd`)
    export PRODUCT_DIR=$(cd $unit_run_dir/../../.. ; echo `pwd`)
@@ -225,11 +226,14 @@ run_os_func(){
 
 do_resolve_os(){
    if [[ $(uname -s) == *"Linux"* ]]; then
-       distro=$(cat /etc/os-release|egrep '^ID='|cut -d= -f2)
+       distro=$(cat /etc/os-release|egrep '^ID='|cut -d= -f2 | tr -d '"')
        if [[ $distro == "ubuntu" ]] || [[ $distro == "pop" ]]; then
          export OS=ubuntu
        elif [[ $distro == "alpine" ]]; then
          export OS=alpine
+       elif [[ "$distro" == "opensuse-tumbleweed" ]]; then
+         export OS="opensuse_tumbleweed"
+         echo "your Linux distro has limited support !!!"
        else
           echo "your Linux distro is not supported !!!"
           exit 1
