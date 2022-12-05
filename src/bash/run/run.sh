@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-
+# install by: 
+# wget https://github.com/csitea/run.sh/archive/refs/tags/current.zip && unzip -o current.zip -d . && mv -v run.sh-current my-app
+# usage: ./run
 
 main(){
    do_set_vars "$@"  # is inside, unless --help flag is present

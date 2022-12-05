@@ -8,7 +8,11 @@ do_print_usage(){
    providing multi-OS support, logging & configuration utils to avoid 
    reinventing the wheel each time you start writing a new bash script ...
    :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
+   to install it:
+   wget https://github.com/csitea/run.sh/archive/refs/tags/current.zip && unzip -o current.zip -d . && mv -v run.sh-current my-app
+   :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 
+  
    IT Works !!! by executing one or more multiple "actions" with the
 
    $0 --action <<action-name>>
