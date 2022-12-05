@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+
 main(){
    do_set_vars "$@"  # is inside, unless --help flag is present
    ts=$(date "+%Y%m%d_%H%M%S")
@@ -15,10 +16,10 @@ main_exec(){
    do_check_install_min_req_bins
    do_load_functions
 
-   test -z ${actions:-} || {
-      do_run_actions "$actions"
-   }
+   test -z ${actions:-} && actions=' do_print_usage '
+   do_run_actions "$actions"
    do_finalize
+   
 }
 
 
@@ -174,10 +175,8 @@ do_check_install_min_req_bins(){
 do_set_vars(){
    set -u -o pipefail
    do_read_cmd_args "$@"
-   # test $? -eq "0" && export exit_code='0'
+   export host_name="$(hostname -s)"
    export exit_code=1 # assume failure for each action, enforce return code usage
-   #export host_name="$(hostname -s)"
-   export host_name="$(cat /proc/sys/kernel/hostname)"
    unit_run_dir=$(perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs_path(@ARGV[0]));' -- "$0")
    export RUN_UNIT=$(cd $unit_run_dir/../../.. ; basename `pwd`)
    export PRODUCT_DIR=$(cd $unit_run_dir/../../.. ; echo `pwd`)
@@ -211,6 +210,7 @@ do_load_functions(){
     while read -r f; do source $f; done < <(ls -1 $PRODUCT_DIR/src/bash/run/*.func.sh)
  }
 
+
 run_os_func(){
    func_to_run=$1 ; shift ;
 
@@ -233,6 +233,7 @@ do_resolve_os(){
          export OS=alpine
        elif [[ "$distro" == "opensuse-tumbleweed" ]]; then
          export OS="opensuse_tumbleweed"
+         export host_name="$(cat /proc/sys/kernel/hostname)"
          echo "your Linux distro has limited support !!!"
        else
           echo "your Linux distro is not supported !!!"
