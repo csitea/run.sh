@@ -229,13 +229,12 @@ run_os_func(){
 do_resolve_os(){
    if [[ $(uname -s) == *"Linux"* ]]; then
        distro=$(cat /etc/os-release|egrep '^ID='|cut -d= -f2 | tr -d '"')
-       if [[ $distro == "ubuntu" ]] || [[ $distro == "pop" ]]; then
-         export OS=ubuntu
+       if [[ $distro == 'ubuntu' ]] || [[ $distro == "pop" ]]; then
+         export OS='ubuntu'
        elif [[ $distro == "alpine" ]]; then
-         export OS=alpine
+         export OS='alpine'
        elif [[ "$distro" == "opensuse-tumbleweed" ]]; then
-         export OS="opensuse_tumbleweed"
-         export host_name="$(cat /proc/sys/kernel/hostname)"
+         export OS="suse"
          echo "your Linux distro has limited support !!!"
        else
           echo "your Linux distro is not supported !!!"
@@ -247,6 +246,7 @@ do_resolve_os(){
       echo "your OS distro is not supported !!!"
       exit 1
    fi
+   'do_set_vars_on_'"$OS"
 }
 
 main "$@"
