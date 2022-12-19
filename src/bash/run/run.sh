@@ -233,6 +233,8 @@ do_resolve_os(){
          export OS='ubuntu'
        elif [[ $distro == "alpine" ]]; then
          export OS='alpine'
+       elif [[ $distro == 'manjaro' ]]; then
+         export OS='manjaro'
        elif [[ "$distro" == "opensuse-tumbleweed" ]]; then
          export OS="suse"
          echo "your Linux distro has limited support !!!"
