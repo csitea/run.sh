@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # install by: 
 # wget https://github.com/csitea/run.sh/archive/refs/tags/current.zip && unzip -o current.zip -d . && mv -v run.sh-current my-app
-# usage: ./run
+# usage: ./run --help
 
 main(){
    do_set_vars "$@"  # is inside, unless --help flag is present
@@ -75,7 +75,7 @@ do_run_actions(){
                actions_found=$((actions_found+1))
                test "$action_name" == "$arg_action" && run_funcs="$(echo -e "${run_funcs}\n$fnc_name")"
             done< <(get_function_list "$fnc_file")
-         done < <(find "src/bash/run/" -type f -name '*.func.sh'|sort)
+         done < <(find "src/bash/run/" "lib/bash/funcs" -type f -name '*.func.sh'|sort)
 
       done < <(echo "$actions")
 
@@ -180,18 +180,39 @@ do_set_vars(){
    export host_name="$(hostname -s)"
    export exit_code=1 # assume failure for each action, enforce return code usage
    unit_run_dir=$(perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs_path(@ARGV[0]));' -- "$0")
-   export RUN_UNIT=$(cd $unit_run_dir/../../.. ; basename `pwd`)
+   export RUN_UNIT=$(cd $unit_run_dir ; basename `pwd` .sh)
    export PRODUCT_DIR=$(cd $unit_run_dir/../../.. ; echo `pwd`)
-   export PP_NAME=$(echo $PRODUCT_DIR|xargs dirname | xargs basename)
-   ENV="${ENV:=lde}"
-
+   export ORG_DIR=$(echo $PRODUCT_DIR|xargs dirname | xargs basename)
+   export BASE_DIR=$(cd $unit_run_dir/../../../../.. && echo `pwd`)
+   ENV="${ENV:=lde}" # <- remove this one IF you want to enforce the caller to provide the ENV var
    cd $PRODUCT_DIR
+   do_ensure_logical_link
    # workaround for github actions running on docker
    test -z ${GROUP:-} && export GROUP=$(id -gn)
    test -z ${GROUP:-} && export GROUP=$(ps -o group,supgrp $$|tail -n 1|awk '{print $1}')
    test -z ${USER:-} && export USER=$(id -un)
    test -z ${UID:-} && export UID=$(id -u)
    test -z ${GID:-} && export GID=$(id -g)
+}
+
+
+# ensure that the <<PRODUCT_DIR>>/run is a logical link and not a regular file
+do_ensure_logical_link(){
+
+   if [ "$RUN_UNIT" = "$(basename $PRODUCT_DIR)" ]; then
+      echo "
+         you probably unzipped into a new app/tool and forgot to run the following cmd:
+         rm -v run; ln -sfn src/bash/run/run.sh run
+         so that ls -al run should look like:
+         lrwx------  1 osuser  osgroup 2022-01-01 20:40 run -> src/bash/run/run.sh
+         !!!
+      "
+      exit 1
+
+   fi
+
+
+   
 }
 
 
@@ -208,7 +229,7 @@ EOF_FIN_MSG
 
 
 do_load_functions(){
-    while read -r f; do source $f; done < <(ls -1 $PRODUCT_DIR/lib/bash/funcs/*.sh)
+    while read -r f; do source $f; done < <(ls -1 $PRODUCT_DIR/lib/bash/funcs/*.func.sh)
     while read -r f; do source $f; done < <(ls -1 $PRODUCT_DIR/src/bash/run/*.func.sh)
  }
 
@@ -248,7 +269,7 @@ do_resolve_os(){
       echo "your OS distro is not supported !!!"
       exit 1
    fi
-   'do_set_vars_on_'"$OS"
+   source "$PRODUCT_DIR"'/lib/bash/funcs/set-vars-on-'"$OS"'.func.sh' ; 'do_set_vars_on_'"$OS"
 }
 
 main "$@"

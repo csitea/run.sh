@@ -3,9 +3,8 @@
 # usage example:
 # source $PRODUCT/lib/bash/funcs/export-json-section-vars.sh
 # do_export_json_section_vars cnf/env/dev.env.json '.env.db'
-#
-# alias psql="PGPASSWORD=${postgres_sys_usr_admin_pw:-} psql -v -t -X -w -U \
-#     ${postgres_sys_usr_admin:-} --port $postgres_rdbms_port --host $postgres_rdbms_host"
+# dependencies: 
+# jq
 #------------------------------------------------------------------------------
 do_export_json_section_vars(){
 
