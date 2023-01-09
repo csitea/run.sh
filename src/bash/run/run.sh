@@ -180,13 +180,13 @@ do_set_vars(){
    export host_name="$(hostname -s)"
    export exit_code=1 # assume failure for each action, enforce return code usage
    unit_run_dir=$(perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs_path(@ARGV[0]));' -- "$0")
+   do_ensure_logical_link
    export RUN_UNIT=$(cd $unit_run_dir ; basename `pwd` .sh)
    export PRODUCT_DIR=$(cd $unit_run_dir/../../.. ; echo `pwd`)
    export ORG_DIR=$(echo $PRODUCT_DIR|xargs dirname | xargs basename)
    export BASE_DIR=$(cd $unit_run_dir/../../../../.. && echo `pwd`)
    ENV="${ENV:=lde}" # <- remove this one IF you want to enforce the caller to provide the ENV var
    cd $PRODUCT_DIR
-   do_ensure_logical_link
    # workaround for github actions running on docker
    test -z ${GROUP:-} && export GROUP=$(id -gn)
    test -z ${GROUP:-} && export GROUP=$(ps -o group,supgrp $$|tail -n 1|awk '{print $1}')
@@ -196,10 +196,12 @@ do_set_vars(){
 }
 
 
+
 # ensure that the <<PRODUCT_DIR>>/run is a logical link and not a regular file
+# if the run.sh is not under the src/bash/run dir terrible things happen ... 
 do_ensure_logical_link(){
 
-   if [ "$RUN_UNIT" = "$(basename $PRODUCT_DIR)" ]; then
+   if [[ "$unit_run_dir" != */src/bash/run ]]; then
       echo "
          you probably unzipped into a new app/tool and forgot to run the following cmd:
          rm -v run; ln -sfn src/bash/run/run.sh run
@@ -208,10 +210,7 @@ do_ensure_logical_link(){
          !!!
       "
       exit 1
-
    fi
-
-
    
 }
 
