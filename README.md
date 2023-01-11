@@ -11,9 +11,13 @@ The most minimalistic multi OS bash entry point for your programs to start build
 Let's say that you want to create a new tool called `"my-app"`
 
 ```bash
-cd /tmp/ ; wget https://github.com/csitea/run.sh/archive/refs/tags/current.zip
-# rename into "my-app"
-unzip -o current.zip -d . && mv -v run.sh-current my-app
+# use the /tmp dir as starting point, get the current version:
+cd /tmp/ ; test -f current.zip && rm -v current.zip
+wget https://github.com/csitea/run.sh/archive/refs/tags/current.zip
+
+# rename it into "my-app" ( rm any older my-app first ) 
+test -d /tmp/my-app && rm -r /tmp/my-app ; unzip -o current.zip -d . && mv -v run.sh-current my-app
+
 # check the usage: 
 cd /tmp/my-app ; ./run --help
 ```
