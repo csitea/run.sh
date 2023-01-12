@@ -226,7 +226,7 @@ do_ensure_logical_link(){
 
 do_finalize(){
 
-  do_log "OK $RUN_UNIT run completed"
+  do_log "OK $RUN_UNIT's run completed"
   cat << EOF_FIN_MSG
   :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
          $RUN_UNIT run completed
