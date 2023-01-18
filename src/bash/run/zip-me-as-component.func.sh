@@ -2,24 +2,24 @@
 #
 # create a component zip file to be unzipped to the component project back
 # usage:
-# COMPONENT=run.sh ./run -a do_zip_me_as_component
+# MODULE=run.sh ./run -a do_zip_me_as_component
 #
 do_zip_me_as_component(){
 
    mkdir -p $PRODUCT_DIR/cnf/lst/
    cd $PRODUCT_DIR
-   do_require_var COMPONENT $COMPONENT
+   do_require_var MODULE $MODULE
 
-   # contains the files to be included while packaging 
-   component_include_list_fle=$PRODUCT_DIR/cnf/lst/$COMPONENT.include.lst
+   # contains the files to be included while packaging
+   component_include_list_fle=$PRODUCT_DIR/cnf/lst/$MODULE.include.lst
 
-   zip_file=$BASE_DIR/$ORG_DIR/$COMPONENT.zip
+   zip_file=$BASE_DIR/$ORG_DIR/$MODULE.zip
    test -f $zip_file && rm -v $zip_file
 
 
    while read -r f; do
 
-      # if the file still exists in the bigger project add it 
+      # if the file still exists in the bigger project add it
       test -f $PRODUCT_DIR/$f && zip $zip_file $f
 
       # if the file does not exist, remove it from the list file
