@@ -1,17 +1,18 @@
 #!/usr/bin/env bash
-# install by: 
+# install by:
 # wget https://github.com/csitea/run.sh/archive/refs/tags/current.zip && unzip -o current.zip -d . && mv -v run.sh-current my-app
 # usage: ./run --help
 
 main(){
-   do_set_vars "$@"  # is inside, unless --help flag is present
-   ts=$(date "+%Y%m%d_%H%M%S")
-   main_log_dir=~/var/log/$RUN_UNIT/; mkdir -p $main_log_dir
-   main_exec "$@" \
-    > >(tee $main_log_dir/$RUN_UNIT.$ts.out.log) \
+  do_flush_screen
+  do_set_vars "$@"  # is inside, unless --help flag is present
+  ts=$(date "+%Y%m%d_%H%M%S")
+  main_log_dir=~/var/log/$PRODUCT/; mkdir -p $main_log_dir
+  main_exec "$@" \
+     > >(tee $main_log_dir/$RUN_UNIT.$ts.out.log) \
     2> >(tee $main_log_dir/$RUN_UNIT.$ts.err.log)
-
 }
+
 
 main_exec(){
    do_resolve_os
@@ -21,7 +22,7 @@ main_exec(){
    test -z ${actions:-} && actions=' do_print_usage '
    do_run_actions "$actions"
    do_finalize
-   
+
 }
 
 
@@ -106,16 +107,23 @@ do_run_actions(){
 
 
 do_flush_screen(){
-   # printf "\033[2J";printf "\033[0;0H"
-   echo ""
+   printf "\033[2J";printf "\033[0;0H"
 }
 
 
 #------------------------------------------------------------------------------
-# echo pass params and print them to a log file and terminal
+# purpose: to pass msgs and print them to a log file and terminal
+#  - with datetime
+#  - the type of msg - INFO, ERROR, DEBUG, WARNING
 # usage:
 # do_log "INFO some info message"
+# do_log "ERROR some error message"
 # do_log "DEBUG some debug message"
+# do_log "WARNING some warning message"
+# depts:
+#  - PRODUCT_DIR - the root dir of the sfw project
+#  - PRODUCT - the name of the software project dir
+#  - host_name - the short hostname of the host / container running on
 #------------------------------------------------------------------------------
 do_log(){
 
@@ -146,8 +154,8 @@ do_log(){
   type_of_msg=$(echo $*|cut -d" " -f1)
   msg="$(echo $*|cut -d" " -f2-)"
   log_dir="${PRODUCT_DIR:-}/dat/log/bash" ; mkdir -p $log_dir
-  log_file="$log_dir/${RUN_UNIT:-}.`date "+%Y%m%d"`.log"
-  msg=" [$type_of_msg] `date "+%Y-%m-%d %H:%M:%S %Z"` [${RUN_UNIT:-}][@${host_name:-}] [$$] $msg "
+  log_file="$log_dir/${PRODUCT:-}."$(date "+%Y%m%d")'.log'
+  msg=" [$type_of_msg] `date "+%Y-%m-%d %H:%M:%S %Z"` [${PRODUCT:-}][@${host_name:-}] [$$] $msg "
   case "$type_of_msg" in
     'FATAL') print_fail "$msg" | tee -a $log_file ;;
     'ERROR') print_fail "$msg" | tee -a $log_file ;;
@@ -185,6 +193,7 @@ do_set_vars(){
    export ORG_DIR=$(echo $PRODUCT_DIR|xargs dirname | xargs basename)
    export BASE_DIR=$(cd $unit_run_dir/../../../../.. && echo `pwd`)
    do_ensure_logical_link
+   export PRODUCT=$(basename $PRODUCT_DIR)
    ENV="${ENV:=lde}" # <- remove this one IF you want to enforce the caller to provide the ENV var
    cd $PRODUCT_DIR
    # workaround for github actions running on docker
@@ -198,7 +207,7 @@ do_set_vars(){
 
 
 # ensure that the <<PRODUCT_DIR>>/run is a logical link and not a regular file
-# if the run.sh is not under the src/bash/run dir terrible things happen ... 
+# if the run.sh is not under the src/bash/run dir terrible things happen ...
 # this one is especially problematic in Dockerfile's ADD command
 do_ensure_logical_link(){
 
@@ -209,7 +218,7 @@ do_ensure_logical_link(){
          so that ls -al run should look like:
          lrwx------  1 osuser  osgroup 2022-01-01 20:40 run -> src/bash/run/run.sh
          !!!
-         or you are running within a Dockerfile and calling directly PRODUCT_DIR/run 
+         or you are running within a Dockerfile and calling directly PRODUCT_DIR/run
          which MIGHT work, but better to call PRODUCT_DIR/src/bash/run/run.sh
       "
       export PRODUCT_DIR=$(cd $unit_run_dir ; echo `pwd`)
@@ -218,9 +227,8 @@ do_ensure_logical_link(){
       echo PRODUCT_DIR: $PRODUCT_DIR
       echo ORG_DIR: $ORG_DIR
       echo BASE_DIR: $BASE_DIR
-      sleep 3
    fi
-   
+
 }
 
 

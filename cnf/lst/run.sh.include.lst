@@ -1,4 +1,5 @@
 cnf/lst/run.sh.include.lst
+.editorconfig
 cnf/lst/run.sh.exclude.lst
 cnf/lst/run.sh.include.lst
 lib/bash/funcs/export-json-section-vars.func.sh
