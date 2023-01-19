@@ -2,13 +2,13 @@
 #
 # create a component zip file to be unzipped to the component project back
 # usage:
-# MODULE=run.sh ./run -a do_zip_me_as_component
+# MODULE=run.sh ./run -a do_zip_me_as_module
 #
-do_zip_me_as_component(){
+do_zip_me_as_module(){
 
    mkdir -p $PRODUCT_DIR/cnf/lst/
    cd $PRODUCT_DIR
-   do_require_var MODULE $MODULE
+   do_require_var MODULE ${MODULE:-}
 
    # contains the files to be included while packaging
    component_include_list_fle=$PRODUCT_DIR/cnf/lst/$MODULE.include.lst
