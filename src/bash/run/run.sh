@@ -169,14 +169,19 @@ do_log(){
 
 
 do_check_install_min_req_bins(){
+   
+   while read -r f; do source $f; done < <(find $PRODUCT_DIR/lib/bash/funcs/ -type f)
 
-  while read -r f; do source $f; done < <(find $PRODUCT_DIR/lib/bash/funcs/ -type f)
-  which perl > /dev/null 2>&1 || {
+   which perl > /dev/null 2>&1 || {
       run_os_func install_bins perl
-  }
-  which jq > /dev/null 2>&1 || {
+   }
+   which jq > /dev/null 2>&1 || {
       run_os_func install_bins jq
-  }
+   }
+   which make > /dev/null 2>&1 || {
+      # this will not work properly - google how-to install make on <<my-operating-system>>
+      run_os_func install_bins make
+   }
 }
 
 
