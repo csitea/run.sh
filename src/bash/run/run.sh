@@ -169,7 +169,7 @@ do_log(){
 
 
 do_check_install_min_req_bins(){
-   
+
    while read -r f; do source $f; done < <(find $PRODUCT_DIR/lib/bash/funcs/ -type f)
 
    which perl > /dev/null 2>&1 || {

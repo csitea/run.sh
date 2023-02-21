@@ -8,11 +8,13 @@ do_scan_to_list_file(){
    mkdir -p $PRODUCT_DIR/cnf/lst/
    product=$(basename $PRODUCT_DIR)
 
+   MODULE=${MODULE:-$PRODUCT}
+
    # contains the regex partterns  to be excluded while packaging
-   component_exclude_list_fle=$PRODUCT_DIR/cnf/lst/$product.exclude.lst
+   component_exclude_list_fle=$PRODUCT_DIR/cnf/lst/$MODULE.exclude.lst
 
    # contains the files to be included while packaging
-   component_include_list_fle=$PRODUCT_DIR/cnf/lst/$product.include.lst
+   component_include_list_fle=$PRODUCT_DIR/cnf/lst/$MODULE.include.lst
    echo cnf/lst/$product.include.lst > $component_include_list_fle
 
    # build a string like (.git|node_modules|.venv|.log)
