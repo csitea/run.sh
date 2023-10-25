@@ -271,6 +271,8 @@ do_resolve_os(){
        distro=$(cat /etc/os-release|egrep '^ID='|cut -d= -f2 | tr -d '"')
        if [[ $distro == 'ubuntu' ]] || [[ $distro == "pop" ]]; then
          export OS='ubuntu'
+       elif [[ $distro == "debian" ]]; then
+         export OS='debian'
        elif [[ $distro == "alpine" ]]; then
          export OS='alpine'
        elif [[ $distro == 'manjaro' ]]; then
