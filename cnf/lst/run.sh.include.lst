@@ -25,6 +25,7 @@ src/bash/run/print-usage.func.sh
 src/bash/run/run.sh
 src/bash/run/scan-to-list-file.func.sh
 src/bash/run/set-vars-on-alpine.func.sh
+src/bash/run/set-vars-on-debian.func.sh
 src/bash/run/set-vars-on-fedora.func.sh
 src/bash/run/set-vars-on-mac.func.sh
 src/bash/run/set-vars-on-manjaro.func.sh
