@@ -7,7 +7,7 @@ main() {
   do_flush_screen
   do_set_vars "$@" # is inside, unless --help flag is present
   ts=$(date "+%Y%m%d_%H%M%S")
-  main_log_dir=~/var/log/$PRODUCT/
+  main_log_dir=~/var/log/$PROJ/
   mkdir -p $main_log_dir
   main_exec "$@" \
     > >(tee $main_log_dir/$RUN_UNIT.$ts.out.log) \
@@ -57,7 +57,7 @@ do_read_cmd_args() {
 do_run_actions() {
   actions=$1
   actions_found=0
-  cd $PRODUCT_DIR
+  cd $PROJ_PATH
   actions="$(echo -e "${actions}" | sed -e 's/^[[:space:]]*//')" #or how-to trim leading space
   run_funcs=''
   while read -d ' ' arg_action; do
@@ -88,7 +88,7 @@ do_run_actions() {
 
   run_funcs="$(echo -e "${run_funcs}" | sed -e 's/^[[:space:]]*//;/^$/d')"
   while read -r run_func; do
-    cd $PRODUCT_DIR
+    cd $PROJ_PATH
     do_log "INFO START ::: running action :: $run_func"
     echo $run_func
     $run_func
@@ -107,6 +107,7 @@ do_flush_screen() {
   printf "\033[0;0H"
 }
 
+
 #------------------------------------------------------------------------------
 # purpose: to pass msgs and print them to a log file and terminal
 #  - with datetime
@@ -117,22 +118,8 @@ do_flush_screen() {
 # do_log "DEBUG some debug message"
 # do_log "WARNING some warning message"
 # depts:
-#  - PRODUCT_DIR - the root dir of the sfw project
-#  - PRODUCT - the name of the software project dir
-#  - host_name - the short hostname of the host / container running on
-#------------------------------------------------------------------------------
-#------------------------------------------------------------------------------
-# purpose: to pass msgs and print them to a log file and terminal
-#  - with datetime
-#  - the type of msg - INFO, ERROR, DEBUG, WARNING
-# usage:
-# do_log "INFO some info message"
-# do_log "ERROR some error message"
-# do_log "DEBUG some debug message"
-# do_log "WARNING some warning message"
-# depts:
-#  - PRODUCT_DIR - the root dir of the sfw project
-#  - PRODUCT - the name of the software project dir
+#  - PROJ_PATH - the root dir of the sfw project
+#  - PROJ - the name of the software project dir
 #  - host_name - the short hostname of the host / container running on
 #------------------------------------------------------------------------------
 do_log() {
@@ -168,15 +155,15 @@ do_log() {
   if [[ "$action" == "START" || "$action" == "STOP" ]]; then
     # Adjust the length of 'START' or 'STOP' token for alignment
     formatted_action=$(printf "%-5s" "$action") # 5 characters wide, adjust as needed
-    msg=" [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [${PRODUCT:-}][@${host_name:-}] [$$] $formatted_action $rest_of_msg"
+    msg=" [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [${PROJ:-}][@${host_name:-}] [$$] $formatted_action $rest_of_msg"
   else
     # Handle other types of messages without formatting the action
-    msg=" [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [${PRODUCT:-}][@${host_name:-}] [$$] $action $rest_of_msg"
+    msg=" [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [${PROJ:-}][@${host_name:-}] [$$] $action $rest_of_msg"
   fi
 
-  log_dir="${PRODUCT_DIR:-}/dat/log/bash"
+  log_dir="${PROJ_PATH:-}/dat/log/bash"
   mkdir -p $log_dir
-  log_file="$log_dir/${PRODUCT:-}."$(date "+%Y%m%d")'.log'
+  log_file="$log_dir/${PROJ:-}."$(date "+%Y%m%d")'.log'
 
   case "$type_of_msg" in
   'FATAL') print_fail "$msg" | tee -a $log_file ;;
@@ -190,7 +177,7 @@ do_log() {
 
 do_check_install_min_req_bins() {
 
-  while read -r f; do source $f; done < <(find $PRODUCT_DIR/lib/bash/funcs/ -type f)
+  while read -r f; do source $f; done < <(find $PROJ_PATH/lib/bash/funcs/ -type f)
 
   which perl >/dev/null 2>&1 || {
     run_os_func install_bins perl
@@ -214,16 +201,16 @@ do_set_vars() {
     cd $unit_run_dir
     basename $(pwd) .sh
   )
-  export PRODUCT_DIR=$(
+  export PROJ_PATH=$(
     cd $unit_run_dir/../../..
     echo $(pwd)
   )
-  export ORG_DIR=$(echo $PRODUCT_DIR | xargs dirname | xargs basename)
-  export BASE_DIR=$(cd $unit_run_dir/../../../../.. && echo $(pwd))
+  export ORG_DIR=$(echo $PROJ_PATH | xargs dirname | xargs basename)
+  export BASE_PATH=$(cd $unit_run_dir/../../../../.. && echo $(pwd))
   do_ensure_logical_link
-  export PRODUCT=$(basename $PRODUCT_DIR)
+  export PROJ=$(basename $PROJ_PATH)
   ENV="${ENV:=lde}" # <- remove this one IF you want to enforce the caller to provide the ENV var
-  cd $PRODUCT_DIR
+  cd $PROJ_PATH
   # workaround for github actions running on docker
   test -z ${GROUP:-} && export GROUP=$(id -gn)
   test -z ${GROUP:-} && export GROUP=$(ps -o group,supgrp $$ | tail -n 1 | awk '{print $1}')
@@ -232,7 +219,7 @@ do_set_vars() {
   test -z ${GID:-} && export GID=$(id -g)
 }
 
-# ensure that the <<PRODUCT_DIR>>/run is a logical link and not a regular file
+# ensure that the <<PROJ_PATH>>/run is a logical link and not a regular file
 # if the run.sh is not under the src/bash/run dir terrible things happen ...
 # this one is especially problematic in Dockerfile's ADD command
 do_ensure_logical_link() {
@@ -244,18 +231,18 @@ do_ensure_logical_link() {
          so that ls -al run should look like:
          lrwx------  1 osuser  osgroup 2022-01-01 20:40 run -> src/bash/run/run.sh
          !!!
-         or you are running within a Dockerfile and calling directly PRODUCT_DIR/run
-         which MIGHT work, but better to call PRODUCT_DIR/src/bash/run/run.sh
+         or you are running within a Dockerfile and calling directly PROJ_PATH/run
+         which MIGHT work, but better to call PROJ_PATH/src/bash/run/run.sh
       "
-    export PRODUCT_DIR=$(
+    export PROJ_PATH=$(
       cd $unit_run_dir
       echo $(pwd)
     )
-    export ORG_DIR=$(echo $PRODUCT_DIR | xargs dirname | xargs basename)
-    export BASE_DIR=$(cd $unit_run_dir/../.. && echo $(pwd))
-    echo PRODUCT_DIR: $PRODUCT_DIR
+    export ORG_DIR=$(echo $PROJ_PATH | xargs dirname | xargs basename)
+    export BASE_PATH=$(cd $unit_run_dir/../.. && echo $(pwd))
+    echo PROJ_PATH: $PROJ_PATH
     echo ORG_DIR: $ORG_DIR
-    echo BASE_DIR: $BASE_DIR
+    echo BASE_PATH: $BASE_PATH
   fi
 
 }
@@ -272,8 +259,8 @@ EOF_FIN_MSG
 }
 
 do_load_functions() {
-  while read -r f; do source $f; done < <(ls -1 $PRODUCT_DIR/lib/bash/funcs/*.func.sh)
-  while read -r f; do source $f; done < <(ls -1 $PRODUCT_DIR/src/bash/run/*.func.sh)
+  while read -r f; do source $f; done < <(ls -1 $PROJ_PATH/lib/bash/funcs/*.func.sh)
+  while read -r f; do source $f; done < <(ls -1 $PROJ_PATH/src/bash/run/*.func.sh)
 }
 
 run_os_func() {
@@ -291,31 +278,29 @@ run_os_func() {
 
 do_resolve_os() {
   if [[ $(uname -s) == *"Linux"* ]]; then
-    distro=$(cat /etc/os-release | egrep '^ID=' | cut -d= -f2 | tr -d '"')
-    if [[ $distro == 'ubuntu' ]] || [[ $distro == "pop" ]]; then
-      export OS='ubuntu'
-    elif [[ $distro == "alpine" ]]; then
-      export OS='alpine'
-    elif [[ $distro == 'manjaro' ]]; then
-      export OS='manjaro'
-    elif [[ $distro == "fedora" ]]; then
-      export OS='fedora'
-    elif [[ $distro == "debian" ]]; then
-      export OS='debian'
-    elif [[ "$distro" == "opensuse-tumbleweed" ]]; then
-      export OS="suse"
+    distro=$(grep '^ID=' /etc/os-release | cut -d= -f2 | tr -d '"')
+    case "$distro" in
+    ubuntu | pop) export OS='ubuntu' ;;
+    alpine) export OS='alpine' ;;
+    manjaro) export OS='manjaro' ;;
+    fedora) export OS='fedora' ;;
+    debian) export OS='debian' ;;
+    opensuse-tumbleweed | opensuse-leap | suse)
+      export OS='suse'
       echo "your Linux distro has limited support !!!"
-    else
+      ;;
+    *)
       echo "your Linux distro is not supported !!!"
       exit 1
-    fi
+      ;;
+    esac
   elif [[ $(uname -s) == *"Darwin"* ]]; then
-    export OS=mac
+    export OS='mac'
   else
     echo "your OS distro is not supported !!!"
     exit 1
   fi
-  source "$PRODUCT_DIR"'/lib/bash/funcs/set-vars-on-'"$OS"'.func.sh'
+  source "$PROJ_PATH"'/lib/bash/funcs/set-vars-on-'"$OS"'.func.sh'
   'do_set_vars_on_'"$OS"
 }
 

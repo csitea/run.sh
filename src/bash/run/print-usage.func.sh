@@ -1,8 +1,8 @@
 #!/bin/bash
 
-do_print_usage(){
-   # if $run_unit is --help, then message will be "--help "
-   cat << EOF_USAGE_01
+do_print_usage() {
+  # if $run_unit is --help, then message will be "--help "
+  cat <<EOF_USAGE_01
    :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
    run.sh is the ultimate bash entrypoint, a generic bash funcs runner script
    providing multi-OS support, logging & configuration utils to avoid
@@ -32,21 +32,20 @@ do_print_usage(){
 
 EOF_USAGE_01
 
-   while read -r func; do
-      echo -e "\t ./run -a $func;"
-   done < <(find src/bash/run/ lib/bash/funcs -name *.func.sh \
-      | perl -ne 's/(.*)(\/)(.*).func.sh/$3/g;print'| perl -ne 's/-/_/g;print "do_" . $_' | sort)
+  while read -r func; do
+    echo -e "\t ./run -a $func;"
+  done < <(find src/bash/run/ lib/bash/funcs -name *.func.sh |
+    perl -ne 's/(.*)(\/)(.*).func.sh/$3/g;print' | perl -ne 's/-/_/g;print "do_" . $_' | sort)
 
-
-   cat << EOF_USAGE_02
+  cat <<EOF_USAGE_02
 
 
    Check the logs from the following dirs:
-    find $PRODUCT_DIR/dat/log -name '*.log' | sort -nr | tail -n 7
-    find ~/var/log/$PRODUCT -name '*.log' | sort -nr | tail -n 7
+    find $PROJ_PATH/dat/log -name '*.log' | sort -nr | tail -n 7
+    find ~/var/log/$PROJ -name '*.log' | sort -nr | tail -n 7
 
     echo less -R <<file-name>>
 
 EOF_USAGE_02
-   exit 1
+  exit 1
 }
