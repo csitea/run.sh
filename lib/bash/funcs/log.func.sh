@@ -56,6 +56,7 @@ do_log() {
   *) echo "$msg" | tee -a $log_file ;;
   esac
 }
+#
 #------------------------------------------------------------------------------
 # do_log: A truly reusable logging function.
 #------------------------------------------------------------------------------
@@ -81,6 +82,8 @@ do_log() {
 # do_log "ERROR An error occurred"
 # do_log "DEBUG Debugging data: x = $x"
 # do_log "WARNING Warning: Configuration file not found"
+# do_log "INFO START ::: doing something"
+# do_log "INFO STOP  ::: doing something"
 #
 # LOG FILE:
 # - Messages are logged to a file named `<PROJ>.<date>.log` in the directory
