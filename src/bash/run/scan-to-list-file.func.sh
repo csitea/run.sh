@@ -8,8 +8,10 @@ do_scan_to_list_file() {
   mkdir -p $PROJ_PATH/cnf/lst/
   product=$(basename $PROJ_PATH)
 
-  MODULE=${MODULE:-$PROJ}
-
+  MODULE=${MODULE:-$RUN_UNIT}
+  echo $MODULE
+  sleep 10
+  mkdir -p $PROJ_PATH/cnf/lst/
   # contains the regex partterns  to be excluded while packaging
   component_exclude_list_fle=$PROJ_PATH/cnf/lst/$MODULE.exclude.lst
 

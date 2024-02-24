@@ -11,6 +11,7 @@ lib/bash/funcs/parse-ini-section-vars.func.sh
 lib/bash/funcs/require-var.func.sh
 lib/bash/funcs/resolve-dirname.func.sh
 lib/bash/funcs/set-vars-on-alpine.func.sh
+lib/bash/funcs/set-vars-on-centos.func.sh
 lib/bash/funcs/set-vars-on-debian.func.sh
 lib/bash/funcs/set-vars-on-mac.func.sh
 lib/bash/funcs/set-vars-on-suse.func.sh

@@ -30,7 +30,7 @@ do_morph_dir() {
     (
       #debug do_log doing find and replace in $file
       do_log "DEBUG working on file: $file"
-      # do_log "DEBUG searching for $STR_TO_SRCH , replacing with :: $STR_TO_REPL"
+      eb# do_log "DEBUG searching for $STR_TO_SRCH , replacing with :: $STR_TO_REPL"
 
       # we do not want to mess with out .git dir
       # or how-to check that a string contains another string

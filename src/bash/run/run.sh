@@ -107,7 +107,6 @@ do_flush_screen() {
   printf "\033[0;0H"
 }
 
-
 #------------------------------------------------------------------------------
 # purpose: to pass msgs and print them to a log file and terminal
 #  - with datetime
@@ -199,7 +198,7 @@ do_set_vars() {
   unit_run_dir=$(perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs_path(@ARGV[0]));' -- "$0")
   export RUN_UNIT=$(
     cd $unit_run_dir
-    basename $(pwd) .sh
+    basename $(pwd).sh
   )
   export PROJ_PATH=$(
     cd $unit_run_dir/../../..
@@ -211,6 +210,8 @@ do_set_vars() {
   export PROJ=$(basename $PROJ_PATH)
   ENV="${ENV:=lde}" # <- remove this one IF you want to enforce the caller to provide the ENV var
   cd $PROJ_PATH
+  do_log "INFO using: BASE_PATH: $BASE_PATH"
+  do_log "INFO using: PROJ_PATH: $PROJ_PATH"
   # workaround for github actions running on docker
   test -z ${GROUP:-} && export GROUP=$(id -gn)
   test -z ${GROUP:-} && export GROUP=$(ps -o group,supgrp $$ | tail -n 1 | awk '{print $1}')
