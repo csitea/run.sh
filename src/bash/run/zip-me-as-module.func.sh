@@ -13,7 +13,7 @@ do_zip_me_as_module() {
   # contains the files to be included while packaging
   component_include_list_fle=$PROJ_PATH/cnf/lst/$MODULE.include.lst
 
-  zip_file=$BASE_PATH/$ORG_DIR/$MODULE.zip
+  zip_file=$PROJ_PATH.zip
   test -f $zip_file && rm -v $zip_file
 
   while read -r f; do
@@ -30,6 +30,6 @@ do_zip_me_as_module() {
 
   do_log "INFO produced the $zip_file file"
 
-  test -f $component_include_list_fle && export exit_code="0"
+  test -f $component_include_list_fle && export EXIT_CODE="0"
 
 }

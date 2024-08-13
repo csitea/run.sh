@@ -8,10 +8,8 @@ do_scan_to_list_file() {
   mkdir -p $PROJ_PATH/cnf/lst/
   product=$(basename $PROJ_PATH)
 
-  MODULE=${MODULE:-$RUN_UNIT}
-  echo $MODULE
-  sleep 10
-  mkdir -p $PROJ_PATH/cnf/lst/
+  MODULE=${MODULE:-$PROJ}
+
   # contains the regex partterns  to be excluded while packaging
   component_exclude_list_fle=$PROJ_PATH/cnf/lst/$MODULE.exclude.lst
 
@@ -32,6 +30,6 @@ do_scan_to_list_file() {
 
   do_log INFO produced the $component_include_list_fle file
 
-  test -f $component_include_list_fle && export exit_code="0"
+  test -f $component_include_list_fle && export EXIT_CODE="0"
 
 }

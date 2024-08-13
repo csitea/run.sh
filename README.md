@@ -1,36 +1,163 @@
-# run.sh
-The most minimalistic multi OS bash entry point for your programs to start build on top of ... 
+# csi-wpb-local-dev-setup
 
-## CHECK USAGE
+## PREREQUISTES
 
-```bash
-./run --help
+### Directory Structure
+
+You MUST have the following relative directory structure:
+
+```sh
+# this could be also ~/opt or any dir your OS usr has rwx
+BASE_PATH=/opt;
+ORG=hsk
+APPLICATION=csi-wpb
+
+find $BASE_PATH/$ORG/$APPLICATION -maxdepth 1|sort
+
+# the APPLICTION_PATH
+/opt/csi/csi-wpb
+
+# the configuration project for the csi-wpb application
+/opt/csi/csi-wpb/csi-wpb-cnf
+
+# the infrastucture project
+/opt/csi/csi-wpb/csi-wpb-inf
+
+# the utils project - where the local dev env utilities residue
+/opt/csi/csi-wpb/csi-wpb-utl
+
+# the web ui project - the web ui src
+/opt/csi/csi-wpb/csi-wpb-wui
+
+# the GLOBAL csi infra-core
+/opt/csi/csi-wpb/infra-core
+
+# the GLOBAL template generator project
+/opt/csi/csi-wpb/tpl-gen
 ```
 
-## SIMPLE INSTALL 
-Let's say that you want to create a new tool called `"my-app"`
+Of course your BASE_PATH COULD be ( but probably shouldn't ) also anything like /var, ~/opt , ~/var etc...
+You MUST have docker and make natively, docker MUST be able to share as volume your `<<BASE_PATH>>/<<ORG>>/<<APPLICATION>>`.
 
-```bash
-# use the /tmp dir as starting point, get the current version:
-cd /tmp/ ; test -f current.zip && rm -v current.zip
-wget https://github.com/csitea/run.sh/archive/refs/tags/current.zip
+### BINARIES
 
-# rename it into "my-app" ( rm any older my-app first ) 
-test -d /tmp/my-app && rm -r /tmp/my-app ; unzip -o current.zip -d . && mv -v run.sh-current my-app
+You must have `make`, `bash` and `docker` on your host.
 
-# check the usage: 
-cd /tmp/my-app ; ./run --help
+### OS user permissions
+
+Your host OS user MUST have full ownership of the `<<BASE_PATH>>` dir on your host - if it does not, or you are not sure, use the `~/opt` dir.
+
+### UID & GID
+
+If those are not set volume sharing between the host and the containers WILL NOT WORK. You have been warned. This is not an opinion, this IS how docker works by design.
+
+```sh
+# Export UID and GID and set them in the current shell session
+export UID=$(id -u) ; export GID=$(id -g);
+
+# Permanently set UID and GID in .bashrc or .bash_profile
+# Append them if they are not yet set
+grep -q 'export UID=$(id -u)' ~/.bashrc || echo 'export UID=$(id -u)' >> ~/.bashrc ;
+grep -q 'export GID=$(id -g)' ~/.bashrc || echo 'export GID=$(id -g)' >> ~/.bashrc ;
+grep -q 'export DOCKER_BUILDKIT=1' ~/.bashrc || echo 'export DOCKER_BUILDKIT=1' >> ~/.bashrc
+source ~/.bashrc ; # apply changes immediately
+
 ```
 
-## FEATURES & FUNCTIONALITIES 
-The `run.sh` has the following function
- 
- - minimalistic multi-os support 
- - etrexemely versatile logging function
- - capability to generically run any bash functions in the `lib/bash/funcs/` and `src/bash/run` dirs
- - json configuration file parsing function
- - package zipping function
- - variables provisioning requiring function
- - cmd args parsing functionality to start building on top of ...
- - directories resolution functionality - use always absolute paths in your functions for stability ...
- - use the `exit_code=$?` to fail early in your functions on errors ...
+### Docker daemon permissions for volumes
+
+On mac and Windows in the UI ensure that the docker daemon does have full capability to map volumes under the `<<BASE_PATH>>`
+
+### YOU MUST enable DockerBuildKit as well
+
+https://docs.docker.com/build/buildkit/#getting-started
+
+#### On Linux
+
+```sh
+  sudo cat /etc/docker/daemon.json
+{ "features": { "buildkit": true } }
+```
+
+## USAGE & HELP
+
+type `make` in the project's root dir:
+
+```sh
+make
+```
+
+## SETUP
+
+```sh
+# build all the docker images and kick-in containers
+export GITHUB_TOKEN="<<your-personal-gitlab-token-here>>"
+make do-setup-csi-wpb-all
+
+```
+
+If you cannot, something is wrong, inspect the docker compose logs
+
+## BUILD
+
+Build in this context means "syntax check, autoformat and build ( if applicable)"
+
+
+## CONFIGURATION GENERATION
+
+```bash
+# override if needed 
+# SRC=/opt/csi/csi-wpb/csi-wpb-cnf/ TGT=/opt/csi/csi-wpb/csi-wpb-cnf
+export STEP=012-static-sites; ORG=csi APP=wpb ENV=dev TPL_SRC=/opt/csi/csi-wpb/csi-wpb-inf  make do-generate-config-for-step
+
+```
+
+## PROVISION & DIVEST 
+
+```bash
+export STEP=012-static-sites; ORG=csi APP=wpb ENV=dev make do-provision
+ORG=csi APP=wpb ENV=dev STEP=008-hsk-gcp-aws-subzone make do-divest
+```
+
+
+
+### Post-Setup
+
+After executing the setup command, verify if the following 3 containers are running:
+
+```plaintext
+CONTAINER ID   IMAGE                          COMMAND                  CREATED          STATUS                    PORTS                            NAMES
+e194b2f12550   wpp-dev-wpp                    "/bin/bash -c 'exec …"   10 minutes ago   Up 10 minutes             8080/tcp, 0.0.0.0:8080->80/tcp   docker-wpp-1
+5339f6fe542e   phpmyadmin/phpmyadmin:latest   "/docker-entrypoint.…"   10 minutes ago   Up 10 minutes             0.0.0.0:8000->80/tcp             docker-phpmyadmin-1
+f008d89d5e62   maria-db                       "docker-entrypoint.s…"   10 minutes ago   Up 10 minutes (healthy)   0.0.0.0:3306->3306/tcp           docker-db-1
+```
+
+### Accessing the Applications
+
+- **PHP Admin:** [http://localhost:8000](http://localhost:8000)
+- **WordPress:** [http://localhost:8080](http://localhost:8080)
+
+## Prerequisites
+
+- **Docker:** Must be installed and able to share `<<BASE_PATH>>` as a volume.
+- **Make:** Must be installed natively on your system.
+
+Simply run `make` to start the setup.
+
+## REPLICATION AND PROPAGATION FROM AND TO BASE PROJECT 
+
+to replicate 
+```bash
+SRC_PATH=/opt/csi/csi-wpb/csi-wpb-utl/src/bash/ bash /opt/csi/csi-wpb/csi-wpb-utl/run -a do_replicate_dir_to_bas
+SRC_PATH=/opt/csi/csi-wpb/csi-wpb-wui/.github/ bash /opt/csi/csi-wpb/csi-wpb-utl/run -a do_replicate_dir_to_bas
+SRC_PATH=/opt/csi/csi-wpb/csi-wpb-utl/src/bash/run/run.sh bash /opt/csi/csi-wpb/csi-wpb-utl/run -a do_replicate_file_to_bas
+```
+
+```bash
+TGT_PATH=/opt/csi/csi-wpb/csi-wpb-utl/src/bash/run bash /opt/csi/csi-wpb/csi-wpb-utl/run -a do_replicate_dir_from_bas
+TGT_PATH=/opt/csi/csi-wpb/csi-wpb-utl/src/bash/run/run.sh bash /opt/csi/csi-wpb/csi-wpb-utl/run -a do_replicate_file_from_bas
+```
+
+```bash
+SRC_PATH=/opt/csi/csi-wpb/csi-wpb-utl/src/bash/run bash /opt/csi/csi-wpb/csi-wpb-utl/run -a do_broadcast_dir_from_bas
+``` 

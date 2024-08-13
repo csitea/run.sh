@@ -1,7 +1,7 @@
 #!/bin/bash
 
-do_set_vars_on_centos(){
+do_set_vars_on_suse() {
 
-   # add any Suse Linux specific vars settings here
-   export host_name="$(hostname | cut -d'.' -f1)"
+  # add any Suse Linux specific vars settings here
+  export HOST_NAME="$(cat /proc/sys/kernel/hostname)"
 }

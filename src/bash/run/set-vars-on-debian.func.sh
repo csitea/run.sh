@@ -1,6 +1,6 @@
-#!/bin/bash 
+#!/bin/bash
 
 do_set_vars_on_debian(){
    export OS=debian
-   export host_name=$(hostname -s)
+   export HOST_NAME=$(hostname -s)
 }

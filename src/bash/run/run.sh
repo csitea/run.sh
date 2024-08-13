@@ -5,7 +5,7 @@
 
 main() {
   do_flush_screen
-  do_set_vars "$@" # is inside, unless --help flag is present
+  do_set_vars_v204 "$@" # is inside, unless --help flag is present
   ts=$(date "+%Y%m%d_%H%M%S")
   main_log_dir=~/var/log/$PROJ/
   mkdir -p $main_log_dir
@@ -92,10 +92,10 @@ do_run_actions() {
     do_log "INFO START ::: running action :: $run_func"
     echo $run_func
     $run_func
-    if [[ "${exit_code:-}" != "0" ]]; then
+    if [[ "${EXIT_CODE:-}" != "0" ]]; then
       msg="FATAL failed to run action: $run_func !!!"
       do_log $msg
-      exit $exit_code
+      exit $EXIT_CODE
     fi
     do_log "INFO STOP ::: running function :: $run_func"
   done < <(echo "$run_funcs")
@@ -119,7 +119,7 @@ do_flush_screen() {
 # depts:
 #  - PROJ_PATH - the root dir of the sfw project
 #  - PROJ - the name of the software project dir
-#  - host_name - the short hostname of the host / container running on
+#  - HOST_NAME - the short hostname of the host / container running on
 #------------------------------------------------------------------------------
 do_log() {
   print_ok() {
@@ -154,23 +154,24 @@ do_log() {
   if [[ "$action" == "START" || "$action" == "STOP" ]]; then
     # Adjust the length of 'START' or 'STOP' token for alignment
     formatted_action=$(printf "%-5s" "$action") # 5 characters wide, adjust as needed
-    msg=" [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [${PROJ:-}][@${host_name:-}] [$$] $formatted_action $rest_of_msg"
+    msg=" [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [${PROJ:-}][@${HOST_NAME:-}] [$$] $formatted_action $rest_of_msg"
   else
     # Handle other types of messages without formatting the action
-    msg=" [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [${PROJ:-}][@${host_name:-}] [$$] $action $rest_of_msg"
+    msg=" [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [${PROJ:-}][@${HOST_NAME:-}] [$$] $action $rest_of_msg"
   fi
 
-  log_dir="${PROJ_PATH:-}/dat/log/bash"
-  mkdir -p $log_dir
-  log_file="$log_dir/${PROJ:-}."$(date "+%Y%m%d")'.log'
+  # Use the LOG_DIR and LOG_FILE variables
+  declare LOG_DIR="${LOG_DIR:-$PROJ_PATH/dat/log}" && export LOG_DIR
+  declare LOG_FILE="${LOG_FILE:-$LOG_DIR/$PROJ.log}" && export LOG_FILE
+  mkdir -p "${LOG_DIR}"
 
   case "$type_of_msg" in
-  'FATAL') print_fail "$msg" | tee -a $log_file ;;
-  'ERROR') print_fail "$msg" | tee -a $log_file ;;
-  'WARNING') print_warning "$msg" | tee -a $log_file ;;
-  'INFO') print_info "$msg" | tee -a $log_file ;;
-  'OK') print_ok "$msg" | tee -a $log_file ;;
-  *) echo "$msg" | tee -a $log_file ;;
+  'FATAL') print_fail "$msg" | tee -a "${LOG_FILE}" ;;
+  'ERROR') print_fail "$msg" | tee -a "${LOG_FILE}" ;;
+  'WARNING') print_warning "$msg" | tee -a "${LOG_FILE}" ;;
+  'INFO') print_info "$msg" | tee -a "${LOG_FILE}" ;;
+  'OK') print_ok "$msg" | tee -a "${LOG_FILE}" ;;
+  *) echo "$msg" | tee -a "${LOG_FILE}" ;;
   esac
 }
 
@@ -190,35 +191,99 @@ do_check_install_min_req_bins() {
   }
 }
 
-do_set_vars() {
+do_set_vars_v204() {
   set -u -o pipefail
+
+  # Read command line arguments
   do_read_cmd_args "$@"
-  export host_name="$(hostname -s)"
-  export exit_code=1 # assume failure for each action, enforce return code usage
+
+  # Set basic variables
+  declare HOST_NAME="$(hostname -s)" && export HOST_NAME
+  declare EXIT_CODE=1 && export EXIT_CODE # assume failure for each action, enforce return code usage
+
+  # Determine directory paths
   unit_run_dir=$(perl -e 'use File::Basename; use Cwd "abs_path"; print dirname(abs_path(@ARGV[0]));' -- "$0")
-  export RUN_UNIT=$(
-    cd $unit_run_dir
-    basename $(pwd).sh
-  )
-  export PROJ_PATH=$(
-    cd $unit_run_dir/../../..
-    echo $(pwd)
-  )
-  export ORG_DIR=$(echo $PROJ_PATH | xargs dirname | xargs basename)
-  export BASE_PATH=$(cd $unit_run_dir/../../../../.. && echo $(pwd))
+  declare RUN_UNIT="$(cd "$unit_run_dir" && basename "$(pwd)").sh" && export RUN_UNIT
+  declare PROJ_PATH="$(cd "$unit_run_dir/../../.." && pwd)" && export PROJ_PATH
+  declare APP_PATH="$(cd "$unit_run_dir/../../../.." && pwd)" && export APP_PATH
+  declare ORG_PATH="$(cd "$unit_run_dir/../../../../.." && pwd)" && export ORG_PATH
+  declare BASE_PATH="$(cd "$unit_run_dir/../../../../../.." && pwd)" && export BASE_PATH
+
+  # Ensure logical link
   do_ensure_logical_link
-  export PROJ=$(basename $PROJ_PATH)
-  ENV="${ENV:=lde}" # <- remove this one IF you want to enforce the caller to provide the ENV var
-  cd $PROJ_PATH
+
+  # Set project name
+  declare PROJ="$(basename "$PROJ_PATH")" && export PROJ
+
+  # Set environment
+  declare ENV="${ENV:-lde}" && export ENV
+
+  # Set log directory and file
+  declare LOG_DIR="${PROJ_PATH:-}/dat/log/bash" && export LOG_DIR
+  mkdir -p "$LOG_DIR"
+  declare LOG_FILE="$LOG_DIR/${PROJ:-}.$(date "+%Y%m%d").log" && export LOG_FILE
+
+  # Change to project directory
+  cd "$PROJ_PATH"
+
+  # Log paths
   do_log "INFO using: BASE_PATH: $BASE_PATH"
+  do_log "INFO using: ORG_PATH: $ORG_PATH"
+  do_log "INFO using: APP_PATH: $APP_PATH"
   do_log "INFO using: PROJ_PATH: $PROJ_PATH"
-  # workaround for github actions running on docker
-  test -z ${GROUP:-} && export GROUP=$(id -gn)
-  test -z ${GROUP:-} && export GROUP=$(ps -o group,supgrp $$ | tail -n 1 | awk '{print $1}')
-  test -z ${USER:-} && export USER=$(id -un)
-  test -z ${UID:-} && export UID=$(id -u)
-  test -z ${GID:-} && export GID=$(id -g)
+  do_log "INFO using: LOG_DIR: $LOG_DIR"
+  do_log "INFO using: LOG_FILE: $LOG_FILE"
+
+  # Set user and group information
+  declare GROUP="${GROUP:-$(id -gn 2>/dev/null || ps -o group,supgrp $$ | tail -n 1 | awk '{print $1}')}" && export GROUP
+  declare USER="${USER:-$(id -un)}" && export USER
+  declare UID="${UID:-$(id -u)}" && export UID
+  declare GID="${GID:-$(id -g)}" && export GID
+
+  # Set OS
+  declare OS="${OS:-$(uname -s | tr '[:upper:]' '[:lower:]')}" && export OS
+
+  # Print out all declared variables
+  echo "Declared variables:"
+  compgen -A variable | grep -E '^(HOST_NAME|EXIT_CODE|RUN_UNIT|PROJ_PATH|APP_PATH|ORG_PATH|BASE_PATH|PROJ|ENV|GROUP|USER|UID|GID|OS|LOG_DIR|LOG_FILE)=' | while read -r var; do
+    echo "$var"
+  done
+
+  # Generate REQUIRED_VARS array
+  REQUIRED_VARS=(HOST_NAME EXIT_CODE RUN_UNIT PROJ_PATH APP_PATH ORG_PATH BASE_PATH PROJ ENV GROUP USER UID GID OS LOG_DIR LOG_FILE)
+  echo "REQUIRED_VARS: ${REQUIRED_VARS[*]}"
 }
+
+# REQUIRED_VARS=(HOST_NAME EXIT_CODE RUN_UNIT PROJ_PATH APP_PATH ORG_PATH BASE_PATH PROJ ENV GROUP USER UID GID OS)
+# do_require_run_vars "${REQUIRED_VARS[@]}"
+do_require_run_vars() {
+  local var_list=("$@")
+  local set_vars=()
+  local unset_vars=()
+
+  for var in "${var_list[@]}"; do
+    if [[ -v $var && -n "${!var}" ]]; then
+      set_vars+=("$var=${!var}")
+    else
+      unset_vars+=("$var")
+    fi
+  done
+
+  if [[ ${#unset_vars[@]} -gt 0 ]]; then
+    echo "FATAL: The following variables are not set or empty:" >&2
+    printf '%s\n' "${unset_vars[@]}" >&2
+    return 1
+  fi
+
+  printf "All required variables are set and non-empty:\n"
+  printf '%s\n' "${set_vars[@]}" | sort
+  return 0
+}
+
+# Usage example:
+# check_variables "${REQUIRED_VARS[@]}"
+# Usage example:
+# do_set_vars_v204 "$@"
 
 # ensure that the <<PROJ_PATH>>/run is a logical link and not a regular file
 # if the run.sh is not under the src/bash/run dir terrible things happen ...
@@ -256,7 +321,7 @@ do_finalize() {
          $RUN_UNIT run completed
   :::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
 EOF_FIN_MSG
-  exit $exit_code
+  exit $EXIT_CODE
 }
 
 do_load_functions() {
@@ -305,4 +370,23 @@ do_resolve_os() {
   'do_set_vars_on_'"$OS"
 }
 
+# usage:
+# checks the return code of the last command and exits with the proper
+# quit_on "restoring the mysql dump to the server"
+quit_on() {
+  rv=$?
+  if [ $rv -ne 0 ]; then
+    do_log "FATAL Error: Failed in $1"
+    exit $rv
+  fi
+}
+
 main "$@"
+
+# Version: 2.0.4
+# VersionHistory:
+# 2.0.4 - 2024-08-13 - versioned required vars api , all exported vars in CAPS
+# 2.0.3 - 2024-07-25 - fix the base path resolution bug
+# 2.0.2 - 2024-07-22 - remove the kin functions
+# 2.0.1 - 2024-07-17 - add the quit_on func to the base vars
+# 2.0.0 - 2024-04-09 - added the explict levels up docs to the base vars

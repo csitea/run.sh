@@ -3,15 +3,16 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# since we enforce tpl-gen when running anything, we do not need to keep track of those files
-cnf/env/*/*/*/tf/*.tfvars
+# those have passwords
+src/bash/scripts/run-ansible*
 
-# we also do not need to keep track of json configs, because we enforce yaml and generate jsons during runtime
-cnf/env/*/*/*env.json
-
-# but step 002-aws-accounts need to be in here
-!cnf/env/*/*/*/tf/002*
-
+dat/tmp/
+dat/json/**
+cnf/env/*
+cnf/env/**/*
+cnf/env/spe
+# but the sample-org MUST be here
+!cnf/env/sample-org
 # kubeconfig specifics
 cnf/env/*/*/*/.kube
 
@@ -425,5 +426,5 @@ FodyWeavers.xsd
 dat/terraform/
 **/.terraform/
 *.lock.hcl
-/src/terraform/**/terraform.tfstate
-/src/terraform/**/terraform.tfstate.backup
+src/terraform/**/terraform.tfstate
+src/terraform/**/terraform.tfstate.backup

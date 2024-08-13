@@ -1,8 +1,8 @@
 #!/bin/bash
 
-do_hello_world(){
+do_hello_world() {
 
   echo hellow world !!!
 
-  export exit_code=$?
+  export EXIT_CODE=$?
 }

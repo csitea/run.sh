@@ -6,15 +6,15 @@
 # do_require_var APP ${APP:-}
 # do_require_var ENV ${ENV:-}
 #------------------------------------------------------------------------------
-do_require_var(){
+do_require_var() {
 
   var_name="${1:-}"
   var="${2:-}"
 
-  do_simple_log(){
-    type_of_msg=$(echo $*|cut -d" " -f1)
-    msg="$(echo $*|cut -d" " -f2-)"
-    echo " [$type_of_msg] `date "+%Y-%m-%d %H:%M:%S %Z"` [$$] $msg "
+  do_simple_log() {
+    type_of_msg=$(echo $* | cut -d" " -f1)
+    msg="$(echo $* | cut -d" " -f2-)"
+    echo " [$type_of_msg] $(date "+%Y-%m-%d %H:%M:%S %Z") [$$] $msg "
   }
 
   test -z "${var:-}" && {
@@ -23,4 +23,3 @@ do_require_var(){
     exit 1
   }
 }
-
